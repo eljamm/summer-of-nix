@@ -99,6 +99,16 @@ class Form(BaseModel):
                 return True
             return False
 
+        @field_validator(
+            "docs_libraries",
+            "docs_programs",
+            "docs_services",
+            "docs_source",
+            mode="before",
+        )
+        def map_docs(cls, value: str) -> list:
+            return value.split("\n")
+
         @field_validator("contributors", mode="before")
         def map_contributors(cls, value: str) -> float | None:
             if value.replace(".", "", 1).isdigit():
@@ -163,12 +173,12 @@ class Form(BaseModel):
         extensions_exist: bool = Field(default=False, alias="q36")
 
         # documentation
-        documentation_libraries: str = Field(alias="q27")
-        documentation_programs: str = Field(alias="q30")
-        documentation_services: str = Field(alias="q33")
-        specification_document: Optional[str] = Field(default=None, alias="q34")
-        documentation_nixos: Optional[str] = Field(default=None, alias="q40")
-        documentation_source: str = Field(alias="q41")
+        docs_libraries: list[str] = Field(alias="q27")
+        docs_programs: list[str] = Field(alias="q30")
+        docs_services: list[str] = Field(alias="q33")
+        specs_document: Optional[str] = Field(default=None, alias="q34")
+        docs_nixos: Optional[str] = Field(default=None, alias="q40")
+        docs_source: list[str] = Field(alias="q41")
 
     questions: dict[str, str]
     responses: list[Response]
@@ -234,15 +244,15 @@ class Project(BaseModel):
         class Programs(BaseModel):
             cli: Optional[str]
             gui: Optional[str]
-            documentation: str
+            docs: list[str]
 
         class Services(BaseModel):
             services: Optional[str]
-            documentation: str
+            docs: list[str]
 
         class Libraries(BaseModel):
             exist: Optional[str]
-            documentation: str
+            docs: list[str]
 
         class MobileApps(BaseModel):
             apps: Optional[str]
@@ -253,10 +263,10 @@ class Project(BaseModel):
         mobile_apps: MobileApps
 
     class Documentation(BaseModel):
-        source_build: str
-        programs: str
-        services: str
-        libraries: str
+        source_build: list[str]
+        programs: list[str]
+        services: list[str]
+        libraries: list[str]
         nix_instructions: Optional[str]
         specification_documents: Optional[str]
 
@@ -328,28 +338,28 @@ def project_from_response(
         artefacts=Project.Artefacts(
             libraries=Project.Artefacts.Libraries(
                 exist=resp.libraries_exist,
-                documentation=resp.documentation_libraries,
+                docs=resp.docs_libraries,
             ),
             programs=Project.Artefacts.Programs(
                 cli=resp.programs_cli,
                 gui=resp.programs_gui,
-                documentation=resp.documentation_programs,
+                docs=resp.docs_programs,
             ),
             services=Project.Artefacts.Services(
                 services=resp.services,
-                documentation=resp.documentation_services,
+                docs=resp.docs_services,
             ),
             mobile_apps=Project.Artefacts.MobileApps(
                 apps=resp.mobile_apps,
             ),
         ),
         docs=Project.Documentation(
-            source_build=resp.documentation_source,
-            programs=resp.documentation_programs,
-            services=resp.documentation_services,
-            libraries=resp.documentation_libraries,
-            nix_instructions=resp.documentation_nixos,
-            specification_documents=resp.specification_document,
+            source_build=resp.docs_source,
+            programs=resp.docs_programs,
+            services=resp.docs_services,
+            libraries=resp.docs_libraries,
+            nix_instructions=resp.docs_nixos,
+            specification_documents=resp.specs_document,
         ),
     )
 
